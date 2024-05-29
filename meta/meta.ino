@@ -1,6 +1,6 @@
 #include <espnow.h>
 #include <ESP8266WiFi.h>
-#include <TimeLib.h>    // http://www.pjrc.com/teensy/td_libs_Time.html
+#include <TimeLib.h>  // http://www.pjrc.com/teensy/td_libs_Time.html
 #include <TinyGPS.h>  // http://arduiniana.org/libraries/tinygpsplus/
 #include <SPI.h>
 #include <Adafruit_GFX.h>      // http://github.com/adafruit/Adafruit-GFX-Library
@@ -47,13 +47,12 @@ long ping;
 const long interval = 5000;
 long previousMillis;
 
-static const int RXPin = 13, TXPin = 13;   
+static const int RXPin = 13, TXPin = 13;
 TinyGPS gps;
 // tmElements_t tm;
 SoftwareSerial SerialGPS(RXPin, TXPin);
 // Offset hours from gps time (UTC)
-const int offset = 2;   // Central European Time
-time_t prevDisplay = 0; // when the digital clock was displayed
+time_t prevDisplay = 0;  // when the digital clock was displayed
 
 // Structure example to receive data
 // Must match the sender structure
@@ -150,8 +149,8 @@ void setup() {
 void loop() {
 
   //obsluga GPS uart
-   while (SerialGPS.available()) {
-    if (gps.encode(SerialGPS.read())) { // process gps messages
+  while (SerialGPS.available()) {
+    if (gps.encode(SerialGPS.read())) {  // process gps messages
       // when TinyGPS reports new data...
       unsigned long age;
       int Year;
@@ -160,15 +159,13 @@ void loop() {
       if (age < 500) {
         // set the Time to the latest GPS reading
         setTime(Hour, Minute, Second, Day, Month, Year);
-        adjustTime(offset * SECS_PER_HOUR);
-        
       }
     }
   }
-  if (timeStatus()!= timeNotSet) {
-    if (now() != prevDisplay) { //update the display only if the time has changed
+  if (timeStatus() != timeNotSet) {
+    if (now() != prevDisplay) {  //update the display only if the time has changed
       prevDisplay = now();
-      //digitalClockDisplay();  
+      //digitalClockDisplay();
     }
   }
 
@@ -200,7 +197,7 @@ void loop() {
     display.setTextSize(2);
     display.setTextColor(WHITE);
     display.setCursor(0, 0);
-    // display.println(lewa_licznik_bufor);   
+    // display.println(lewa_licznik_bufor);
     // display.println(esp_now_get_peer_rssi);
     display.print("GPS ");
     if (ready) {
@@ -209,22 +206,27 @@ void loop() {
       display.println("X");
     }
 
-    if (delivery) {
-      display.print("ping "); display.println(ping);
-      }
-    else {
-      display.print("ping "); display.println(ping);
-      }
-  
-    display.println(prawa_licznik_bufor);
+    display.print(hour());
+    display.print(":");
+    display.print(minute());
+    display.print(":");
     display.println(second());
+    // if (delivery) {
+    //   display.print("ping "); display.println(ping);
+    //   }
+    // else {
+    //   display.print("ping "); display.println(ping);
+    //   }
+
+    //display.println(prawa_licznik_bufor);
+    //display.println(second());
 
     // if (millis() % 1000 >= syncMillis % 1000) {
     //     display.println((tm.Hour * 3600 + tm.Minute * 60 + tm.Second) * 1000 + millis() % 1000 - syncMillis % 1000);
     //   } else {
     //     display.println((tm.Hour * 3600 + tm.Minute * 60 + tm.Second) * 1000 + 1000 + millis() % 1000 - syncMillis % 1000);
     //   }
-    
+
     display.display();
   }
 
@@ -242,33 +244,27 @@ void loop() {
   */
 
   // ############################ wysylamy co 5 sekund info o statusie i czasie toru ####################
-  unsigned long currentMillis = millis();
-  // if (currentMillis - previousMillis >= 5000) {
-    if (currentMillis - previousMillis >= 200) {
-    // save the last time you updated the DHT values
-    previousMillis = currentMillis;
-    myData.lewa_czas = lewa_czas;
+  // unsigned long currentMillis = millis();
+  // // if (currentMillis - previousMillis >= 5000) {
+  //   if (currentMillis - previousMillis >= 200) {
+  //   // save the last time you updated the DHT values
+  //   previousMillis = currentMillis;
+  //   myData.lewa_czas = lewa_czas;
 
-    // Send message via ESP-NOW
-    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
+  //   // Send message via ESP-NOW
+  //   esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
 
-    // Print incoming readings
-    // printIncomingReadings();
-  }
+  //   // Print incoming readings
+  //   // printIncomingReadings();
+  // }
 }
 
 //########  podprogramy
 
 ICACHE_RAM_ATTR void PPS() {  //przerwanie od PPS
   syncMillis = millis();
-    ready = 1;   //jesli nie ma przerwania to sie zeruje
-    
+  ready = 1;  //jesli nie ma przerwania to sie zeruje
 
-    Serial.print(hour());
-    Serial.print(":");
-    Serial.print(minute());
-    Serial.print(":");
-    Serial.println(second());
 }
 
 ICACHE_RAM_ATTR void lewa() {
@@ -282,6 +278,7 @@ ICACHE_RAM_ATTR void lewa() {
       } else {
         lewa_czas = (hour() * 3600 + minute() * 60 + second()) * 1000 + 1000 + millis() % 1000 - syncMillis % 1000;
       }
+      myData.lewa_czas = lewa_czas;
     }
   }
   lewa_licznik++;
