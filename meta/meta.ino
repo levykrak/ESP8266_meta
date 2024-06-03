@@ -40,7 +40,7 @@ word lewa_licznik = 0, prawa_licznik = 0, lewa_licznik_bufor = 0, prawa_licznik_
 unsigned char LCDrefreshSecond = 0;
 static const uint32_t GPSBaud = 9600;
 unsigned long cutnumber();
-long ping;
+// long ping;
 //String timeString();
 // String millisToTimeString();
 //bool wyscig = 1, ready = 0;
@@ -80,7 +80,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
     Serial.println("Delivery fail");
 #endif
     delivery = 0;
-    ping++;
+    //ping++;
   }
 }
 //---------------------------------------------
@@ -90,13 +90,16 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
   memcpy(&incomingStart, incomingData, sizeof(incomingStart));
 
   //Serial.println(incomingStart.status);
-  incomingStart.status = 0;
-  wyscig_lewa = incomingStart.wyscig;
-  wyscig_prawa = incomingStart.wyscig;
-  if (incomingStart.wyscig == 1) {
-    lewa_licznik_filter = filter;  //zerujemy filtry
-    prawa_licznik_filter = filter;
+  if (incomingStart.wyscig) {    //jesli dostaniemy wyscig zerujemy
+    incomingStart.status = 0;
+    wyscig_lewa = incomingStart.wyscig;
+    wyscig_prawa = incomingStart.wyscig;
+    if (incomingStart.wyscig == 1) {
+      lewa_licznik_filter = filter;  //zerujemy filtry
+      prawa_licznik_filter = filter;
+    }
   }
+  Serial.println(wyscig_lewa);
   esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));  //wysylamy status GPS
 }
 
@@ -189,7 +192,8 @@ void loop() {
   // }
 
   //--obsluga OLED
-  if (lewa_licznik != lewa_licznik_bufor || prawa_licznik != prawa_licznik_bufor || ready != ready_bufor) {
+  // if (lewa_licznik != lewa_licznik_bufor || prawa_licznik != prawa_licznik_bufor || ready != ready_bufor) {
+    if (ready != ready_bufor) {
     lewa_licznik_bufor = lewa_licznik;
     prawa_licznik_bufor = prawa_licznik;
     ready_bufor = ready;
@@ -197,8 +201,7 @@ void loop() {
     display.setTextSize(2);
     display.setTextColor(WHITE);
     display.setCursor(0, 0);
-    // display.println(lewa_licznik_bufor);
-    // display.println(esp_now_get_peer_rssi);
+    display.println(lewa_licznik_bufor);
     display.print("GPS ");
     if (ready) {
       display.println("OK");
@@ -206,11 +209,12 @@ void loop() {
       display.println("X");
     }
 
-    display.print(hour());
-    display.print(":");
-    display.print(minute());
-    display.print(":");
-    display.println(second());
+    // display.print(hour());
+    // display.print(":");
+    // display.print(minute());
+    // display.print(":");
+    // display.println(second());
+
     // if (delivery) {
     //   display.print("ping "); display.println(ping);
     //   }
@@ -264,7 +268,6 @@ void loop() {
 ICACHE_RAM_ATTR void PPS() {  //przerwanie od PPS
   syncMillis = millis();
   ready = 1;  //jesli nie ma przerwania to sie zeruje
-
 }
 
 ICACHE_RAM_ATTR void lewa() {
@@ -279,6 +282,8 @@ ICACHE_RAM_ATTR void lewa() {
         lewa_czas = (hour() * 3600 + minute() * 60 + second()) * 1000 + 1000 + millis() % 1000 - syncMillis % 1000;
       }
       myData.lewa_czas = lewa_czas;
+      Serial.print("lewa_czas: ");
+      Serial.println(lewa_czas);
     }
   }
   lewa_licznik++;
