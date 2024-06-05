@@ -215,16 +215,6 @@ void setup()
 }
 
 
-unsigned long cutnumber(unsigned long number, unsigned int cutbeg, unsigned int cutend)
-{
-  number = number - pow(10, cutbeg) * (unsigned long)(number / pow(10, cutbeg));
-  if (cutend != 0)
-  {
-    number = (unsigned long)(number / pow(10, cutend));
-  }
-  return number;
-}
-
 // ####################   glowna petla ##############
 void loop()
 {
