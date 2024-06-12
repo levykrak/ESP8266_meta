@@ -33,6 +33,7 @@ bool wyscig_prawa = 0;
 #define OLED_RESET -1       // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#define LED_BUILTINN D4
 
 // word licznik;
 bool delivery = 0;
@@ -40,7 +41,7 @@ unsigned long lastButtonchange = 0, syncMillis = 0, pushTime = 0, lewa_czas = 0,
 word lewa_licznik = 0, prawa_licznik = 0, lewa_licznik_bufor = 0, prawa_licznik_bufor = 0, prawa_licznik_filter = 0, lewa_licznik_filter = filter;
 unsigned char LCDrefreshSecond = 0;
 static const uint32_t GPSBaud = 9600;
-unsigned long cutnumber();
+// unsigned long cutnumber();
 // long ping;
 // String timeString();
 // String millisToTimeString();
@@ -95,7 +96,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus)
 void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len)
 {
   memcpy(&incomingStart, incomingData, sizeof(incomingStart));
-
+  digitalWrite(LED_BUILTINN, LOW); // Turn the LED on
   // Serial.println(incomingStart.status);
   if (incomingStart.wyscig)
   { // jesli dostaniemy wyscig zerujemy
@@ -108,7 +109,7 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len)
       prawa_licznik_filter = filter;
     }
   }
-  Serial.println(wyscig_lewa);
+  // Serial.println(wyscig_lewa);
   esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData)); // wysylamy status GPS
 }
 
@@ -167,13 +168,15 @@ IRAM_ATTR void prawa()
   prawa_licznik++;
 }
 
-
 void setup()
 {
   Serial.begin(115200);
   SerialGPS.begin(GPSBaud);
   pinMode(PPSPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PPSPin), PPS, RISING);
+
+  pinMode(LED_BUILTINN, OUTPUT);    // Initialize the LED_BUILTIN pin as an output
+  digitalWrite(LED_BUILTINN, HIGH); // Turn the LED off
 
   //------------- Init ESP-NOW--------------------------------
   WiFi.mode(WIFI_STA);
@@ -213,7 +216,6 @@ void setup()
   pinMode(prawaPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(prawaPin), prawa, FALLING);
 }
-
 
 // ####################   glowna petla ##############
 void loop()
@@ -286,28 +288,6 @@ void loop()
       display.println("X");
     }
 
-    // display.print(hour());
-    // display.print(":");
-    // display.print(minute());
-    // display.print(":");
-    // display.println(second());
-
-    // if (delivery) {
-    //   display.print("ping "); display.println(ping);
-    //   }
-    // else {
-    //   display.print("ping "); display.println(ping);
-    //   }
-
-    // display.println(prawa_licznik_bufor);
-    // display.println(second());
-
-    // if (millis() % 1000 >= syncMillis % 1000) {
-    //     display.println((tm.Hour * 3600 + tm.Minute * 60 + tm.Second) * 1000 + millis() % 1000 - syncMillis % 1000);
-    //   } else {
-    //     display.println((tm.Hour * 3600 + tm.Minute * 60 + tm.Second) * 1000 + 1000 + millis() % 1000 - syncMillis % 1000);
-    //   }
-
     display.display();
   }
 
@@ -338,4 +318,16 @@ void loop()
   //   // Print incoming readings
   //   // printIncomingReadings();
   // }
+  // ############################ gasimy lede jesli nie ma komunikacji ####################
+  unsigned long currentMillis = millis();
+  // if (currentMillis - previousMillis >= 5000) {
+  if (currentMillis - previousMillis >= 600)
+  {
+    previousMillis = currentMillis;
+    Serial.println(delivery);
+    if (delivery)
+      delivery = 0;
+    else
+      digitalWrite(LED_BUILTINN, HIGH); // Turn the LED off
+  }
 }
