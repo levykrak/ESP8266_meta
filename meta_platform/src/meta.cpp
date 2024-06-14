@@ -9,7 +9,7 @@
 #include <SoftwareSerial.h>
 // #include <WiFi.h>
 
-#define Debug
+// #define Debug
 // REPLACE WITH THE MAC Address of your receiver
 uint8_t broadcastAddress[] = {0xE8, 0x9F, 0x6D, 0x93, 0xF6, 0x50};
 
@@ -139,8 +139,10 @@ void IRAM_ATTR lewa()
         lewa_czas = (hour() * 3600 + minute() * 60 + second()) * 1000 + 1000 + millis() % 1000 - syncMillis % 1000;
       }
       myData.lewa_czas = lewa_czas;
+#ifdef Debug
       Serial.print("lewa_czas: ");
       Serial.println(lewa_czas);
+#endif
     }
   }
   lewa_licznik++;
@@ -324,7 +326,9 @@ void loop()
   if (currentMillis - previousMillis >= 600)
   {
     previousMillis = currentMillis;
+#ifdef debug
     Serial.println(delivery);
+#endif
     if (delivery)
       delivery = 0;
     else
